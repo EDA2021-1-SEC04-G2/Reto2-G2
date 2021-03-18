@@ -79,7 +79,7 @@ while True:
         load_data(catalog)
         print('Se cargaron: ',lt.size(catalog['videos']), ' videos')
     elif int(inputs[0]) == 2:
-        category_name=input('Ingrese el nombre de la categoría: ')
+        category_name=' '+input('Ingrese el nombre de la categoría: ')
         number=int(input('Buscando los TOP ?: '))
         print("Buscando videos con más likes....")
         print_results(controller.get_most_like_videos(catalog,category_name),number)
