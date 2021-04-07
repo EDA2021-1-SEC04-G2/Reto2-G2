@@ -52,11 +52,15 @@ def printMenu():
     print("1- Cargar información en el catálogo")
     print("2- Videos Likes categor'ia ")
 
-def init_catalog():
+def init_catalog(tipo_num,factor):
     """
     Inicializa el catalogo de videos
     """
-    return controller.init_catalog()
+    if tipo_num==1:
+        tipo="PROBING"
+    else:
+        tipo="CHAINING"
+    return controller.init_catalog(tipo,factor)
 
 
 def load_data(catalog):
@@ -74,10 +78,16 @@ while True:
     printMenu()
     inputs = input('Seleccione una opción para continuar\n')
     if int(inputs[0]) == 1:
+        print("1. Probing")
+        print("2. Chaining")
+        tipo_num=int(input("Que tipo de mapa desea usar para cargar los datos, marque 1 o 2\n"))
+        factor=float(input("Escoja el factor de carga del mapa: "))
         print("Cargando información de los archivos ....")
-        catalog = init_catalog()
-        load_data(catalog)
+        catalog = init_catalog(tipo_num,factor)
+        answer = controller.load_data(catalog)
         print('Se cargaron: ',lt.size(catalog['videos']), ' videos')
+        print("Tiempo [ms]: ", f"{answer[0]:.3f}", "  ||  ",
+              "Memoria [kB]: ", f"{answer[1]:.3f}")
     elif int(inputs[0]) == 2:
         category_name=' '+input('Ingrese el nombre de la categoría: ')
         number=int(input('Buscando los TOP ?: '))

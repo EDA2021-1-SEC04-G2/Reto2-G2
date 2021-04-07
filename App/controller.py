@@ -20,6 +20,8 @@
  * along withthis program.  If not, see <http://www.gnu.org/licenses/>.
  """
 
+import time
+import tracemalloc
 import config as cf
 import model
 import csv
@@ -30,8 +32,8 @@ El controlador se encarga de mediar entre la vista y el modelo.
 """
 # Inicialización del Catálogo de libros
 
-def init_catalog():
-    catalog = model.new_catalog()
+def init_catalog(tipo,factor):
+    catalog = model.new_catalog(tipo,factor)
     return catalog
 
 
@@ -39,8 +41,25 @@ def init_catalog():
 
 
 def load_data(catalog):
+
+    delta_time = -1.0
+    delta_memory = -1.0
+
+    tracemalloc.start()
+    start_time = getTime()
+    start_memory = getMemory()
+
     load_videos(catalog)
     load_category_names(catalog)
+
+    stop_memory = getMemory()
+    stop_time = getTime()
+    tracemalloc.stop()
+
+    delta_time = stop_time - start_time
+    delta_memory = deltaMemory(start_memory, stop_memory)
+
+    return delta_time, delta_memory
 
 
 def load_videos(catalog):
@@ -56,8 +75,42 @@ def load_category_names(catalog):
     for category in input_file:
         model.add_category_name(catalog, category)
 
-# Funciones de ordenamiento
+
 
 # Funciones de consulta sobre el catálogo
 def get_most_like_videos(catalog,category_name):
-    return model.get_most_like_videos(catalog,category_name)
+    ord_videos = model.get_most_like_videos(catalog,category_name)
+    return ord_videos, delta_time, delta_memory
+    
+# ======================================
+# Funciones para medir tiempo y memoria
+# ======================================
+
+def getTime():
+    """
+    devuelve el instante tiempo de procesamiento en milisegundos
+    """
+    return float(time.perf_counter()*1000)
+
+
+def getMemory():
+    """
+    toma una muestra de la memoria alocada en instante de tiempo
+    """
+    return tracemalloc.take_snapshot()
+
+
+def deltaMemory(start_memory, stop_memory):
+    """
+    calcula la diferencia en memoria alocada del programa entre dos
+    instantes de tiempo y devuelve el resultado en bytes (ej.: 2100.0 B)
+    """
+    memory_diff = stop_memory.compare_to(start_memory, "filename")
+    delta_memory = 0.0
+
+    # suma de las diferencias en uso de memoria
+    for stat in memory_diff:
+        delta_memory = delta_memory + stat.size_diff
+    # de Byte -> kByte
+    delta_memory = delta_memory/1024.0
+    return delta_memory
