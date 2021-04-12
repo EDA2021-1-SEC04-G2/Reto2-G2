@@ -143,8 +143,8 @@ def get_most_view_videos(catalog,country_name,category_name):
     if exist_country:
         entry=mp.get(countries,country_name)
         country=me.getValue(entry)
-    for j in range(1,lt.size(country['videos'])+1):
-          video=lt.getElement(country['videos'],j)
+    videos=lt.iterator(country['videos'])
+    for video in videos:
           if video['category_id']==category_id:
              lt.addLast(videos_country_category,video)
     return merge.sort(videos_country_category,cmp_videos_by_views)
