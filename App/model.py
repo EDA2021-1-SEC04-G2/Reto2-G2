@@ -57,8 +57,7 @@ def new_catalog():
                                    loadfactor=factor)
     catalog['categories']=mp.newMap(40,
                                     maptype=tipo,
-                                    loadfactor=factor,
-                                    comparefunction=compare_categories_by_id)
+                                    loadfactor=factor)
     return catalog
 
 # Funciones para agregar informacion al catalogo
@@ -137,7 +136,6 @@ def get_category_id(catalog,category_name):
     return category_id
 
 def get_most_view_videos(catalog,country_name,category_name):
-    #TODO requerimiento 1
     category_id=get_category_id(catalog,category_name)
     videos_country_category=lt.newList('ARRAY_LIST')
     countries=catalog['countries']
@@ -151,18 +149,6 @@ def get_most_view_videos(catalog,country_name,category_name):
              lt.addLast(videos_country_category,video)
     return merge.sort(videos_country_category,cmp_videos_by_views)
 
-def get_most_like_videos(catalog,category_name):
-    #TODO ejemplo requerimiento 1. Borrar al final
-    category_id=get_category_id(catalog,category_name)
-    if category_id==0:
-        return None
-    categories=catalog['categories']
-    entry=mp.get(categories,category_id)
-    category=me.getValue(entry)
-    videos=category['videos']
-    ans= merge.sort(videos,cmp_videos_by_likes)
-    return ans
-
 def get_most_time_trending_country(catalog,country_name):
     countries=catalog['countries']
     exist_country=mp.contains(countries,country_name)
@@ -172,7 +158,6 @@ def get_most_time_trending_country(catalog,country_name):
     country_videos=country['videos']
     trending_counter=mp.newMap(200,maptype='Probing', loadfactor=0.5)
     size=lt.size(country_videos)
-
     for i in range(1,size+1):
         video=lt.getElement(country_videos,i)
         exist_video=mp.contains(trending_counter,video['video_id'])
@@ -182,16 +167,16 @@ def get_most_time_trending_country(catalog,country_name):
         else:
             video_trending=me.getValue(mp.get(trending_counter,video['video_id']))
             video_trending['counter']+=1
-    #TODO terminar req 2, iterar maps
-    '''x=0
+    videos=mp.valueSet(trending_counter)
+    videos=lt.iterator(videos)
+    x=0
     more_trending=None
-    for j in range(1,lt.size(trending_counter)+1):
-        video=lt.getElement(trending_counter,j)
+    for video in videos:
         if video['counter']>x:
             x=video['counter']
-            more_trending=video'''
+            more_trending=video
     return more_trending
-
+'''
 def get_most_time_trending_category(catalog,category_name):
     #TODO requerimiento 3
     category_id=get_category_id(catalog,category_name)
@@ -230,7 +215,7 @@ def get_most_likes_tag(catalog,tag,country_name):
         if tag in video_tags and video['country']==country_name:
             lt.addLast(tag_country_videos,video)
     return merge.sort(tag_country_videos,cmp_videos_by_likes)
-
+'''
 
 
 
