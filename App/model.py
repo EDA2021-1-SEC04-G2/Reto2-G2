@@ -26,11 +26,14 @@
 
 
 import config as cf
+import sys
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import mergesort as merge
 assert cf
+default_limit=1000
+sys.setrecursionlimit(default_limit*1000)
 
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
@@ -39,16 +42,16 @@ los mismos.
 
 # Construccion de modelos
 
-def new_catalog(tipo,factor):
+def new_catalog():
+    tipo='PROBING'
+    factor=0.5
     catalog = {'videos':None,
                'category_names': None,
                'countries':None,
                'categories':None}
 
     catalog['videos'] = lt.newList('ARRAY_LIST')
-    catalog['category_names'] = mp.newMap(40,
-                                          maptype=tipo,
-                                          loadfactor=factor)
+    catalog['category_names'] = lt.newList('ARRAY_LIST')
     catalog['countries']=mp.newMap(20,
                                    maptype=tipo,
                                    loadfactor=factor)
@@ -88,7 +91,7 @@ def add_video_country(catalog,country_name,video):
 
 def add_category_name(catalog, category):
     category=new_category_name(category['name'],category['id'])
-    mp.put(catalog['category_names'],category['name'] ,category)
+    lt.addLast(catalog['category_names'], category)
 
 # Funciones para creacion de datos
 def new_category(category_id):
@@ -114,20 +117,42 @@ def new_country(country_name):
 def new_category_name(name,id):  
     return {'name':name,'id':id}
 
+# Funciones utilizadas para comparar elementos dentro de una lista
+
+def cmp_videos_by_likes(video1,video2):
+    return float(video1['likes'])>float(video2['likes'])
+
+def cmp_videos_by_views(video1,video2):
+    return float(video1['views'])>float(video2['views'])
 
 # Funciones de consulta
 
 def get_category_id(catalog,category_name):
     category_id=0
-    category_names=catalog['category_names']
-    exist_category=mp.contains(category_names,category_name)
-    if exist_category:
-        entry=mp.get(category_names,category_name)
-        category=me.getValue(entry)
-        category_id=category['id']
+    size=lt.size(catalog['category_names'])
+    for i in range(1,size+1):
+        category=lt.getElement(catalog['category_names'],i)
+        if category_name==category['name']:
+            category_id=category['id']
     return category_id
 
+def get_most_view_videos(catalog,country_name,category_name):
+    #TODO requerimiento 1
+    category_id=get_category_id(catalog,category_name)
+    videos_country_category=lt.newList('ARRAY_LIST')
+    countries=catalog['countries']
+    exist_country=mp.contains(countries,country_name)
+    if exist_country:
+        entry=mp.get(countries,country_name)
+        country=me.getValue(entry)
+    for j in range(1,lt.size(country['videos'])+1):
+          video=lt.getElement(country['videos'],j)
+          if video['category_id']==category_id:
+             lt.addLast(videos_country_category,video)
+    return merge.sort(videos_country_category,cmp_videos_by_views)
+
 def get_most_like_videos(catalog,category_name):
+    #TODO ejemplo requerimiento 1. Borrar al final
     category_id=get_category_id(catalog,category_name)
     if category_id==0:
         return None
@@ -138,24 +163,75 @@ def get_most_like_videos(catalog,category_name):
     ans= merge.sort(videos,cmp_videos_by_likes)
     return ans
 
+def get_most_time_trending_country(catalog,country_name):
+    countries=catalog['countries']
+    exist_country=mp.contains(countries,country_name)
+    if exist_country:
+        entry=mp.get(countries,country_name)
+        country=me.getValue(entry)
+    country_videos=country['videos']
+    trending_counter=mp.newMap(200,maptype='Probing', loadfactor=0.5)
+    size=lt.size(country_videos)
+
+    for i in range(1,size+1):
+        video=lt.getElement(country_videos,i)
+        exist_video=mp.contains(trending_counter,video['video_id'])
+        if not exist_video:
+            video_trending={'video_id':video['video_id'],'title':video['title'],'counter':1,'channel_title':video['channel_title'],'country':country_name}
+            mp.put(trending_counter,video['video_id'],video_trending)
+        else:
+            video_trending=me.getValue(mp.get(trending_counter,video['video_id']))
+            video_trending['counter']+=1
+    #TODO terminar req 2, iterar maps
+    '''x=0
+    more_trending=None
+    for j in range(1,lt.size(trending_counter)+1):
+        video=lt.getElement(trending_counter,j)
+        if video['counter']>x:
+            x=video['counter']
+            more_trending=video'''
+    return more_trending
+
+def get_most_time_trending_category(catalog,category_name):
+    #TODO requerimiento 3
+    category_id=get_category_id(catalog,category_name)
+    categories=catalog['categories']
+    poscategory = lt.isPresent(categories,category_id)
+    category = lt.getElement(categories, poscategory)
+    category_videos=category['videos']
+    trending_counter=lt.newList('ARRAY_LIST', cmpfunction=compare_videos_by_title)
+    size=lt.size(category_videos)
+    for i in range(1,size+1):
+        video=lt.getElement(category_videos,i)
+        posvideo=lt.isPresent(trending_counter,video['title'])
+        if posvideo==0:
+            video_trending={'video_id':video['video_id'],'title':video['title'],'counter':1,'channel_title':video['channel_title'],'category_id':category_id}
+            lt.addLast(trending_counter,video_trending)
+        else:
+            video_trending=lt.getElement(trending_counter,posvideo)
+            video_trending['counter']+=1
+    x=0
+    more_trending=None
+    for j in range(1,lt.size(trending_counter)+1):
+        video=lt.getElement(trending_counter,j)
+        if video['counter']>x:
+            x=video['counter']
+            more_trending=video
+    return more_trending
+
+def get_most_likes_tag(catalog,tag,country_name):
+    #TODO requerimiento 4
+    videos=catalog['videos']
+    size=lt.size(videos)
+    tag_country_videos=lt.newList('ARRAY_LIST')
+    for i in range(1,size+1):
+        video=lt.getElement(videos,i)
+        video_tags=video['tags']
+        if tag in video_tags and video['country']==country_name:
+            lt.addLast(tag_country_videos,video)
+    return merge.sort(tag_country_videos,cmp_videos_by_likes)
 
 
-# Funciones utilizadas para comparar elementos dentro de una lista
 
-def cmp_videos_by_likes(video1,video2):
-    return float(video1['likes'])>float(video2['likes'])
 
-def compare_categories_by_id(keyname, category):
-    """
-    Compara dos nombres de autor. El primero es una cadena
-    y el segundo un entry de un map
-    """
-    cat_entry = me.getKey(category)
-    if (keyname == cat_entry):
-        return 0
-    elif (keyname > cat_entry):
-        return 1
-    else:
-        return -1
 
-# Funciones de ordenamiento
