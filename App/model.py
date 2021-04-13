@@ -156,7 +156,7 @@ def get_most_time_trending_country(catalog,country_name):
         entry=mp.get(countries,country_name)
         country=me.getValue(entry)
     country_videos=country['videos']
-    trending_counter=mp.newMap(200,maptype='Probing', loadfactor=0.5)
+    trending_counter=mp.newMap(maptype='Probing', loadfactor=0.5)
     size=lt.size(country_videos)
     for i in range(1,size+1):
         video=lt.getElement(country_videos,i)
@@ -203,19 +203,20 @@ def get_most_time_trending_category(catalog,category_name):
             x=video['counter']
             more_trending=video
     return more_trending
-
+'''
 def get_most_likes_tag(catalog,tag,country_name):
-    #TODO requerimiento 4
-    videos=catalog['videos']
-    size=lt.size(videos)
+    countries=catalog['countries']
+    entry=mp.get(countries,country_name)
+    country=me.getValue(entry)
+    country_videos=country['videos']
+    videos=lt.iterator(country_videos)
     tag_country_videos=lt.newList('ARRAY_LIST')
-    for i in range(1,size+1):
-        video=lt.getElement(videos,i)
+    for video in videos:
         video_tags=video['tags']
-        if tag in video_tags and video['country']==country_name:
+        if tag in video_tags:
             lt.addLast(tag_country_videos,video)
     return merge.sort(tag_country_videos,cmp_videos_by_likes)
-'''
+
 
 
 
