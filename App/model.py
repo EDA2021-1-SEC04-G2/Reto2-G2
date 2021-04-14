@@ -177,20 +177,6 @@ def get_most_time_trending_country(catalog,country_name):
             more_trending=video
     return more_trending
 
-def get_most_view_videos(catalog,country_name,category_name):
-    category_id=get_category_id(catalog,category_name)
-    videos_country_category=lt.newList('ARRAY_LIST')
-    countries=catalog['countries']
-    exist_country=mp.contains(countries,country_name)
-    if exist_country:
-        entry=mp.get(countries,country_name)
-        country=me.getValue(entry)
-    videos=lt.iterator(country['videos'])
-    for video in videos:
-          if video['category_id']==category_id:
-             lt.addLast(videos_country_category,video)
-    return merge.sort(videos_country_category,cmp_videos_by_views)
-
 def get_most_time_trending_category(catalog,category_name):
     category_id=get_category_id(catalog,category_name)
     categories=catalog['categories']
