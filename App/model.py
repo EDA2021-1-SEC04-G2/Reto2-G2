@@ -176,34 +176,50 @@ def get_most_time_trending_country(catalog,country_name):
             x=video['counter']
             more_trending=video
     return more_trending
-'''
+
+def get_most_view_videos(catalog,country_name,category_name):
+    category_id=get_category_id(catalog,category_name)
+    videos_country_category=lt.newList('ARRAY_LIST')
+    countries=catalog['countries']
+    exist_country=mp.contains(countries,country_name)
+    if exist_country:
+        entry=mp.get(countries,country_name)
+        country=me.getValue(entry)
+    videos=lt.iterator(country['videos'])
+    for video in videos:
+          if video['category_id']==category_id:
+             lt.addLast(videos_country_category,video)
+    return merge.sort(videos_country_category,cmp_videos_by_views)
+
 def get_most_time_trending_category(catalog,category_name):
-    #TODO requerimiento 3
     category_id=get_category_id(catalog,category_name)
     categories=catalog['categories']
-    poscategory = lt.isPresent(categories,category_id)
-    category = lt.getElement(categories, poscategory)
+    exist_category=mp.contains(categories,category_id)
+    if exist_category:
+        entry=mp.get(categories,category_id)
+        category=me.getValue(entry)
     category_videos=category['videos']
-    trending_counter=lt.newList('ARRAY_LIST', cmpfunction=compare_videos_by_title)
+    trending_counter=mp.newMap(maptype='Probing', loadfactor=0.5)
     size=lt.size(category_videos)
     for i in range(1,size+1):
         video=lt.getElement(category_videos,i)
-        posvideo=lt.isPresent(trending_counter,video['title'])
-        if posvideo==0:
+        exist_video=mp.contains(trending_counter,video['video_id'])
+        if not exist_video:
             video_trending={'video_id':video['video_id'],'title':video['title'],'counter':1,'channel_title':video['channel_title'],'category_id':category_id}
-            lt.addLast(trending_counter,video_trending)
+            mp.put(trending_counter,video['video_id'],video_trending)
         else:
-            video_trending=lt.getElement(trending_counter,posvideo)
+            video_trending=me.getValue(mp.get(trending_counter,video['video_id']))
             video_trending['counter']+=1
+    videos=mp.valueSet(trending_counter)
+    videos=lt.iterator(videos)
     x=0
     more_trending=None
-    for j in range(1,lt.size(trending_counter)+1):
-        video=lt.getElement(trending_counter,j)
+    for video in videos:
         if video['counter']>x:
             x=video['counter']
             more_trending=video
     return more_trending
-'''
+
 def get_most_likes_tag(catalog,tag,country_name):
     countries=catalog['countries']
     entry=mp.get(countries,country_name)
